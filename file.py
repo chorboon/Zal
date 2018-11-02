@@ -53,6 +53,7 @@ def upload_file():
     return render_template('upload.html')
 
 @app.route('/list/')
+@app.route('/upload/')
 def filelist():
     filels = os.listdir(os.path.join(app.config['UPLOAD_FOLDER']))
     return render_template('files.html', files=filels)
