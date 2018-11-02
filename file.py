@@ -1,16 +1,33 @@
 import os
 from flask import Flask, flash, request, redirect, url_for, send_from_directory,render_template
 from werkzeug.utils import secure_filename
+import hashlib
 
-UPLOAD_FOLDER = '/home/jtan/git/Zal/upload'
+
+UPLOAD_FOLDER = 'upload'
 ALLOWED_EXTENSIONS =(['txt','pdf','png'])
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024
+app.secret_key = b'_5#y2LF4Q8zec'
+
 
 def allowed_file(filename):
     return '.' in filename and \
             filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def hashfile(path, blocksize = 65536):
+    afile = open(path, 'rb')
+    hasher = hashlib.md5()
+    buf = afile.read(blocksize)
+    while len(buf) > 0:
+        hasher.update(buf)
+        buf = afile.read(blocksize)
+    afile.close()
+    return hasher.hexdigest()
 
 
 @app.route('/', methods=['GET','POST'])
@@ -31,15 +48,7 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('uploaded_file', filename=filename))
 
-    return '''
-    <!doctype html>
-    <title>Upload new file</title>
-    <h1>Upload new file</h1>
-    <form method=post enctype=multipart/form-data>
-        <input type=file name=file>
-        <input type=submit value=Upload>
-    </form>
-    '''
+    return render_template('upload.html')
 
 @app.route('/list/')
 def filelist():
@@ -63,6 +72,6 @@ def uploaded_file(filename):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int("5001"), debug=True)
+    app.run(host="0.0.0.0", port=int("5000"), debug=True)
 
 
