@@ -1,8 +1,8 @@
 import os
-from flask import Flask, flash, request, redirect, url_for, send_from_directory
+from flask import Flask, flash, request, redirect, url_for, send_from_directory,render_template
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = '/upload'
+UPLOAD_FOLDER = '/home/jtan/git/Zal/upload'
 ALLOWED_EXTENSIONS =(['txt','pdf','png'])
 
 app = Flask(__name__)
@@ -31,8 +31,6 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('uploaded_file', filename=filename))
 
-
-
     return '''
     <!doctype html>
     <title>Upload new file</title>
@@ -42,12 +40,29 @@ def upload_file():
         <input type=submit value=Upload>
     </form>
     '''
+
+@app.route('/list/')
+def filelist():
+    filels = os.listdir(os.path.join(app.config['UPLOAD_FOLDER']))
+    return render_template('files.html', files=filels)
+
+@app.route('/delete/')
+def deletelist():
+    filels = os.listdir(os.path.join(app.config['UPLOAD_FOLDER']))
+    return render_template('delete.html', files=filels)
+
+@app.route('/delete/<item_id>')
+def delete_file(item_id):
+    print (item_id)
+    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], item_id))
+    return redirect(url_for('filelist'))
+
 @app.route('/upload/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int("5000"), debug=True)
+    app.run(host="0.0.0.0", port=int("5001"), debug=True)
 
 
