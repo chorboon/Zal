@@ -39,8 +39,14 @@ def comparehash(new_hash):
     print(filels)
     for file in filels:
         print (file)
-        same = filecmp.cmp(new_hash,os.path.join(app.config['HASH_FOLDER'],file))
-        print(same)
+        x = filecmp.cmp(new_hash,os.path.join(app.config['HASH_FOLDER'],file))
+        print (x)
+        if x:
+            print (new_hash.split('/',1)[1].lower())
+            print (file.lower())
+            if new_hash.split('/',1)[1].lower() == file.lower():
+                flash ('file already uploaded')
+                return False
 
 @app.route('/', methods=['GET','POST'])
 def upload_file():
@@ -62,7 +68,8 @@ def upload_file():
             h = open(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5', "w")
             h.write(x)
             h.close()
-            comparehash(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5')
+            if not(comparehash(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5')):
+                return redirect(request.url)
             return redirect(url_for('uploaded_file', filename=filename))
         if file:
             flash('File type not permitted')
