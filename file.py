@@ -2,21 +2,23 @@ import os
 from flask import Flask, flash, request, redirect, url_for, send_from_directory,render_template
 from werkzeug.utils import secure_filename
 import hashlib
+import filecmp
 
 
 UPLOAD_FOLDER = 'upload'
-ALLOWED_EXTENSIONS =(['txt','pdf','png','log'])
+HASH_FOLDER = 'hash'
+ALLOWED_EXTENSIONS =(['txt','pdf','png','log','jpg','jpeg','gif'])
 
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['HASH_FOLDER'] = HASH_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024
 app.secret_key = b'_5#y2LF4Q8zec'
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-            filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def hashfile(path, blocksize = 65536):
@@ -29,6 +31,16 @@ def hashfile(path, blocksize = 65536):
     afile.close()
     return hasher.hexdigest()
 
+def comparehash(new_hash):
+    filels = os.listdir(os.path.join(app.config['HASH_FOLDER']))
+    print(new_hash)
+    bfile = open(new_hash, 'rb')
+    print (bfile.read())
+    print(filels)
+    for file in filels:
+        print (file)
+        same = filecmp.cmp(new_hash,os.path.join(app.config['HASH_FOLDER'],file))
+        print(same)
 
 @app.route('/', methods=['GET','POST'])
 def upload_file():
@@ -46,6 +58,11 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            x = hashfile(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            h = open(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5', "w")
+            h.write(x)
+            h.close()
+            comparehash(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5')
             return redirect(url_for('uploaded_file', filename=filename))
         if file:
             flash('File type not permitted')
@@ -53,7 +70,6 @@ def upload_file():
     return render_template('upload.html')
 
 @app.route('/list/')
-@app.route('/upload/')
 def filelist():
     filels = os.listdir(os.path.join(app.config['UPLOAD_FOLDER']))
     return render_template('files.html', files=filels)
@@ -67,7 +83,11 @@ def deletelist():
 def delete_file(item_id):
     print (item_id)
     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], item_id))
-    return redirect(url_for('filelist'))
+    try:
+        os.remove(os.path.join(app.config['HASH_FOLDER'], item_id)+'.md5')
+    except:
+        pass
+    return redirect(url_for('deletelist'))
 
 @app.route('/upload/<filename>')
 def uploaded_file(filename):
