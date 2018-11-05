@@ -1,8 +1,6 @@
-import os
+import os,hashlib,filecmp,time,pathlib
 from flask import Flask, flash, request, redirect, url_for, send_from_directory,render_template
 from werkzeug.utils import secure_filename
-import hashlib
-import filecmp
 
 
 UPLOAD_FOLDER = 'upload'
@@ -15,7 +13,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['HASH_FOLDER'] = HASH_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024
 app.secret_key = b'_5#y2LF4Q8zec'
-
+pathlib.Path('temp').mkdir(parents=True, exist_ok=True) 
+pathlib.Path('blob').mkdir(parents=True, exist_ok=True) 
+pathlib.Path('upload').mkdir(parents=True, exist_ok=True) 
+pathlib.Path('hash').mkdir(parents=True, exist_ok=True) 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
@@ -33,20 +34,12 @@ def hashfile(path, blocksize = 65536):
 
 def comparehash(new_hash):
     filels = os.listdir(os.path.join(app.config['HASH_FOLDER']))
-    print(new_hash)
     bfile = open(new_hash, 'rb')
-    print (bfile.read())
-    print(filels)
     for file in filels:
-        print (file)
         x = filecmp.cmp(new_hash,os.path.join(app.config['HASH_FOLDER'],file))
-        print (x)
         if x:
-            print (new_hash.split('/',1)[1].lower())
-            print (file.lower())
-            if new_hash.split('/',1)[1].lower() == file.lower():
-                flash ('file already uploaded')
-                return False
+            return file
+    return False
 
 @app.route('/', methods=['GET','POST'])
 def upload_file():
@@ -63,13 +56,33 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            x = hashfile(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            h = open(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5', "w")
+            link = os.path.join('upload', filename)
+            tmp_file = os.path.join('temp', filename)
+            tmp_hash = os.path.join('temp', filename) + '.md5'
+            blobname = str(time.time())
+            blob_path = os.path.join('blob',blobname)
+            blob_hash_path = os.path.join('hash',blobname) + '.md5' 
+
+            file.save(tmp_file)
+            x = hashfile(tmp_file)
+            h = open(tmp_hash, "w")
             h.write(x)
             h.close()
-            if not(comparehash(os.path.join(app.config['HASH_FOLDER'], filename) + '.md5')):
-                return redirect(request.url)
+            samehash = comparehash(tmp_hash)
+            print (samehash)
+            if samehash:
+                if tmp_hash.split('/',1)[1].lower() == samehash.lower():
+                    flash ('file already uploaded')
+                    os.remove(tmp_hash)
+                    os.remove(tmp_file)
+                else:
+                    os.remove(tmp_hash)
+                    os.rename(tmp_file)
+                    os.symlink('../blob/'+samehash,link)
+                    return redirect(request.url)
+            os.rename(tmp_file,blob_path)
+            os.rename(tmp_hash,blob_hash_path)
+            os.symlink('../'+blob_path,link)
             return redirect(url_for('uploaded_file', filename=filename))
         if file:
             flash('File type not permitted')
@@ -88,7 +101,6 @@ def deletelist():
 
 @app.route('/delete/<item_id>')
 def delete_file(item_id):
-    print (item_id)
     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], item_id))
     try:
         os.remove(os.path.join(app.config['HASH_FOLDER'], item_id)+'.md5')
@@ -103,5 +115,3 @@ def uploaded_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int("5000"), debug=True)
-
-
