@@ -9,11 +9,14 @@
     {% with messages = get_flashed_messages() %}
         {% if messages %}
              {% for message in messages %}
-             Error: {{ message }}
+             {{ message }}
              {% endfor %}
         {% endif %}
     {% endwith %}
     <p>
     <p>
 
+    <a href="/list/">Click here to see the uploaded files</a>
+    <p>
+    <p>
     <a href="/delete/">Click here to delete</a>

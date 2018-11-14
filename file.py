@@ -77,13 +77,14 @@ def upload_file():
                     os.remove(tmp_file)
                 else:
                     os.remove(tmp_hash)
-                    os.rename(tmp_file)
+                    os.remove(tmp_file)
                     os.symlink('../blob/'+samehash,link)
                     return redirect(request.url)
             os.rename(tmp_file,blob_path)
             os.rename(tmp_hash,blob_hash_path)
             os.symlink('../'+blob_path,link)
-            return redirect(url_for('uploaded_file', filename=filename))
+            flash(filename + ' uploaded')
+            return redirect(url_for('upload_file'))
         if file:
             flash('File type not permitted')
             return redirect(request.url)
