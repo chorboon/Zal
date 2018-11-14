@@ -56,30 +56,39 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            print ('filename is ' + filename)
             link = os.path.join('upload', filename)
+            print ('link is ' + link)
             tmp_file = os.path.join('temp', filename)
             tmp_hash = os.path.join('temp', filename) + '.md5'
             blobname = str(time.time())
             blob_path = os.path.join('blob',blobname)
             blob_hash_path = os.path.join('hash',blobname) + '.md5' 
 
+            #upload and save the file and has to temp directory
             file.save(tmp_file)
             x = hashfile(tmp_file)
             h = open(tmp_hash, "w")
             h.write(x)
             h.close()
+            #check if file already uploaded by comparing hash
             samehash = comparehash(tmp_hash)
             print (samehash)
             if samehash:
-                if tmp_hash.split('/',1)[1].lower() == samehash.lower():
-                    flash ('file already uploaded')
-                    os.remove(tmp_hash)
-                    os.remove(tmp_file)
-                else:
-                    os.remove(tmp_hash)
-                    os.remove(tmp_file)
-                    os.symlink('../blob/'+samehash,link)
+                os.remove(tmp_hash)
+                os.remove(tmp_file)
+                try:
+                    #hash same, try creating a link
+                    os.symlink('../blob/'+samehash.split('.md5',1)[0],link)
                     return redirect(request.url)
+                except FileExistsError:
+                    #hash same and file name same, so do nothing
+                    flash ('link already uploaded')
+                    return redirect(request.url)
+
+
+            #file not uploaded, moving temp file to blob, temp has to hash, creating link
+            #in upload directory
             os.rename(tmp_file,blob_path)
             os.rename(tmp_hash,blob_hash_path)
             os.symlink('../'+blob_path,link)
