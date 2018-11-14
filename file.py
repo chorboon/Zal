@@ -1,16 +1,19 @@
 import os,hashlib,filecmp,time,pathlib
 from flask import Flask, flash, request, redirect, url_for, send_from_directory,render_template
 from werkzeug.utils import secure_filename
+from glob import glob
 
 
 UPLOAD_FOLDER = 'upload'
 HASH_FOLDER = 'hash'
+BLOB_FOLDER = 'blob'
 ALLOWED_EXTENSIONS =(['txt','pdf','png','log','jpg','jpeg','gif'])
 
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['HASH_FOLDER'] = HASH_FOLDER
+app.config['BLOB_FOLDER'] = BLOB_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024
 app.secret_key = b'_5#y2LF4Q8zec'
 pathlib.Path('temp').mkdir(parents=True, exist_ok=True) 
@@ -56,14 +59,12 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            print ('filename is ' + filename)
             link = os.path.join('upload', filename)
-            print ('link is ' + link)
             tmp_file = os.path.join('temp', filename)
             tmp_hash = os.path.join('temp', filename) + '.md5'
-            blobname = str(time.time())
+            blobname = str(time.ctime())
             blob_path = os.path.join('blob',blobname)
-            blob_hash_path = os.path.join('hash',blobname) + '.md5' 
+            blob_hash_path = os.path.join('hash',blobname) + '.md5.0' 
 
             #upload and save the file and has to temp directory
             file.save(tmp_file)
@@ -73,17 +74,19 @@ def upload_file():
             h.close()
             #check if file already uploaded by comparing hash
             samehash = comparehash(tmp_hash)
-            print (samehash)
             if samehash:
                 os.remove(tmp_hash)
                 os.remove(tmp_file)
                 try:
                     #hash same, try creating a link
                     os.symlink('../blob/'+samehash.split('.md5',1)[0],link)
+                    dup_links = samehash.split('.')[-1]
+                    increment = int(dup_links) + 1
+                    os.rename(os.path.join(app.config['HASH_FOLDER'],samehash),os.path.join(app.config['HASH_FOLDER'],samehash.split('.')[0] + '.md5.'+str(increment)))
                     return redirect(request.url)
                 except FileExistsError:
                     #hash same and file name same, so do nothing
-                    flash ('link already uploaded')
+                    flash (filename + ' already uploaded')
                     return redirect(request.url)
 
 
@@ -111,9 +114,21 @@ def deletelist():
 
 @app.route('/delete/<item_id>')
 def delete_file(item_id):
-    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], item_id))
+    secure_item_id = secure_filename(item_id)
+    blob = os.readlink(os.path.join(app.config['UPLOAD_FOLDER'], secure_item_id)).split('/')[-1]
+    print('../hash/' + blob + '.md5.*')
+    dup_links = glob('hash/' + blob + '.md5.*')[0].split('.')[-1]
+    print (blob)
+    print (dup_links)
+    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], secure_item_id))
+    if dup_links == '0' :
+        os.remove(os.path.join(app.config['HASH_FOLDER'], blob)+'.md5.0')
+        os.remove(os.path.join(app.config['BLOB_FOLDER'], blob))
+    else:
+        new_dup_links = str(int(dup_links) - 1)
+        os.rename(os.path.join(app.config['HASH_FOLDER'], blob + '.md5.' + dup_links), os.path.join(app.config['HASH_FOLDER'], blob + '.md5.'+ new_dup_links))
     try:
-        os.remove(os.path.join(app.config['HASH_FOLDER'], item_id)+'.md5')
+        pass
     except:
         pass
     return redirect(url_for('deletelist'))
