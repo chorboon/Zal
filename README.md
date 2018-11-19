@@ -3,10 +3,11 @@
 
 OBJECTIVE:
 To build a dockerized app with APIs for uploading and downloading files
-
+<br>
 HOWTO:
 To build the images, run the following as root:
 docker build -t file-app .
+<br>
 docker run --name file-app -p 80:5000 file-app
 
 Use a browser to perform the following:
