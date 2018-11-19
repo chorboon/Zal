@@ -34,3 +34,5 @@ Share nothing buddy for replication
 
 CREDIT:
 Code from http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ used as initial template
+
+https://www.pythoncentral.io/finding-duplicate-files-with-python/ for deduplication code
