@@ -25,18 +25,18 @@ http://server/list/filename
 To select a file to delete:
 http://server/delete/
 
-FEATURES:
-Added hashing to files to detect and avoid duplication, used links for identical files with different file names
+FEATURES:  
+Added hashing to files to detect and avoid duplication, used links for identical files with different file names  
 
-TODO:
-Basic user authentication
+TODO:  
+Basic user authentication  
 
-Share nothing buddy for replication
+Share nothing buddy for replication  
 
 
-CREDIT:
-Code from http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ used as initial template
+CREDIT:  
+Code from http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ used as initial template  
 
-https://www.pythoncentral.io/finding-duplicate-files-with-python/ for deduplication code
+https://www.pythoncentral.io/finding-duplicate-files-with-python/ for deduplication code  
 
 Dockerfile template from https://www.wintellect.com/containerize-python-app-5-minutes/
