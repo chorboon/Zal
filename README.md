@@ -1,5 +1,6 @@
 # Zal
 
+#branch to implement bulk file uploads
 
 OBJECTIVE:  
 To build a dockerized app with APIs for uploading and downloading files  
