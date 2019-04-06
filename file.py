@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os,hashlib,filecmp,time,pathlib
 from flask import Flask, flash, request, redirect, url_for, send_from_directory,render_template
 from werkzeug.utils import secure_filename

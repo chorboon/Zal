@@ -1,4 +1,4 @@
-FROM python:alpine3.7
+FROM python:alpine
 MAINTAINER chorboon@gmail.com
 
 COPY . .
@@ -9,4 +9,4 @@ RUN pip install -r requirements.txt
 #RUN useradd -r -u 999 appuser
 #USER appuser
 EXPOSE 5000
-CMD python ./file.py
+CMD ./file.py
