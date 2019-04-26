@@ -2,7 +2,7 @@
 
 
 ## OBJECTIVE
-To build a dockerized app with APIs for uploading and downloading files  
+To build a dockerized app with APIs for uploading and downloading files and avoid duplication in storage 
 
 ## HOWTO  
 To build the images, run the following as root:
