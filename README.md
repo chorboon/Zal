@@ -29,7 +29,8 @@ http://server/delete/
 Added hashing to files to detect and avoid duplication, used links for identical files with different file names  
 
 ##  TODO:  
-Basic user authentication  
+Basic user authentication
+Use UUID for blobs
 
 Share nothing buddy for replication  
 
